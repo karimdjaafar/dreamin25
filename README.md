@@ -5,7 +5,7 @@ Some stuff about the presentation/hands-on of Agentforce and MuleChain Dreamin y
 
 
 mulechaindemo
-some demo using MuleChain Chat Answer Prompt
+Simple demo using MuleChain Chat Answer Prompt
 
 agentforceconnectordemo
 demo using the agentforce ecosystem manage reserrations
