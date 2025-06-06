@@ -1,0 +1,29 @@
+{
+    "OPENAI": {
+        "OPENAI_API_KEY": "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"
+    },
+    "MISTRAL_AI": {
+        "MISTRAL_AI_API_KEY": "YOUR_MISTRAL_AI_API_KEY"
+    },
+    "OLLAMA": {
+        "OLLAMA_BASE_URL": "http://baseurl.ollama.com"
+    },
+    "GROQAI_OPENAI" :{
+    	"GROQ_API_KEY" : "YOUR_GROQAI_APIKEY"
+    },
+    "ANTHROPIC": {
+        "ANTHROPIC_API_KEY": "YOUR_ANTHROPIC_API_KEY"
+    },
+    "AZURE_OPENAI": {
+        "AZURE_OPENAI_KEY": "YOUR_AZURE_OPENAI_KEY",
+        "AZURE_OPENAI_ENDPOINT": "http://endpoint.azure.com",
+        "AZURE_OPENAI_DEPLOYMENT_NAME": "YOUR_DEPLOYMENT_NAME"
+    },
+    "HUGGING_FACE": {
+        "HUGGING_FACE_API_KEY": "YOUR_HF_KEY"
+    }, 
+    "GEMINI_AI": {
+    	"GEMINI_AI_KEY": "YOUR_GEMINI_KEY"
+    }
+ 
+}

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns:ms-aichain="http://www.mulesoft.org/schema/mule/ms-aichain"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:file="http://www.mulesoft.org/schema/mule/file" xmlns:sftp="http://www.mulesoft.org/schema/mule/sftp" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/sftp http://www.mulesoft.org/schema/mule/sftp/current/mule-sftp.xsd
+http://www.mulesoft.org/schema/mule/file http://www.mulesoft.org/schema/mule/file/current/mule-file.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ms-aichain http://www.mulesoft.org/schema/mule/ms-aichain/current/mule-ms-aichain.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd">
+	<flow name="ingest-knowledge" doc:id="57eac48b-3924-4a34-82da-c00f8b627e94" >
+		<sftp:listener doc:name="On New or Updated File" doc:id="95402f8c-0663-4a96-b010-8e7ebf5e9c40" config-ref="SFTP_Config" directory="/muletest/upload/new">
+			<scheduling-strategy >
+				<fixed-frequency />
+			</scheduling-strategy>
+		</sftp:listener>
+		<set-variable value="#[payload]" doc:name="Save File Payload" doc:id="e513204b-1283-4426-9d18-0114a931ac51" variableName="file"/>
+		<set-variable value="#[attributes.path]" doc:name="Save File Source Path" doc:id="1469b4b5-737b-4aed-bea1-cdb000551a3c" variableName="path"/>
+		<set-variable value="#[attributes.fileName]" doc:name="Save File Name" doc:id="57539b9b-cfa1-469c-ac8a-6a0b18dc800a" variableName="filename"/>
+		<file:write doc:name="Save File" doc:id="a2f6f1c1-871c-43a8-a821-cfa7f64c867b" config-ref="File_Config" path='#[mule.home ++ "/apps/" ++ app.name ++ "/" ++ vars.filename]'>
+			<file:content ><![CDATA[#[vars.file]]]></file:content>
+		</file:write>
+		<sftp:read doc:name="Get Embedding Store" doc:id="43ce27ec-5397-4c50-b908-a0756ebeffd3" config-ref="SFTP_Config" path="/muletest/upload/embedding/knowledge.store"/>
+		<ms-aichain:embedding-add-document-to-store doc:name="Embedding add document to store" doc:id="222fb44c-17f7-4c60-af6d-ed18ceba88e9" storeName='#[mule.home ++ "/apps/" ++ app.name ++ "/knowledge.store"]' contextPath='#[mule.home ++ "/apps/" ++ app.name ++ "/" ++ vars.filename]' fileType="any" maxSegmentSizeInChars="#[2048]" maxOverlapSizeInChars="#[2048]"/>
+		<file:read doc:name="Reload Embedding Store" doc:id="e8e83d4f-6b7d-4d98-8fdb-99e7467fca67" config-ref="File_Config" path='#[mule.home ++ "/apps/" ++ app.name ++ "/knowledge.store"]'/>
+		<sftp:write doc:name="Save Embedding" doc:id="e312909c-408e-436e-9f16-93bedbe35d7e" config-ref="SFTP_Config" path='/muletest/upload/embedding/knowledge.store'>
+		</sftp:write>
+		<sftp:move doc:name="Move Processed file" doc:id="97ed28b9-d040-46f4-afd7-8f3ac4d8215b" config-ref="SFTP_Config" sourcePath='#["/muletest/upload/new/" ++ vars.filename]' targetPath='#["/muletest/upload/processed/" ++ vars.filename]'/>
+		<file:delete doc:name="Delete local file" doc:id="3be1a992-cddd-4fcb-bdb3-e3725eba5ebb" config-ref="File_Config" path='#[mule.home ++ "/apps/" ++ app.name ++ "/" ++ vars.filename]'/>
+	</flow>
+	<flow name="knowledge-new-store" doc:id="9596afa7-2967-4818-bfa7-30582ef68a02" >
+		<http:listener doc:name="Listener" doc:id="c4e9a832-0be3-4d72-ac62-7faab4f731a9" config-ref="HTTP_Listener_config" path="/embedding" allowedMethods="POST"/>
+		<set-variable value="#[payload]" doc:name="Save Payload" doc:id="329465de-99be-4745-a890-00c8de850150" variableName="payload"/>
+		<ms-aichain:embedding-new-store doc:name="Embedding new store" doc:id="d47e79a5-f699-4529-952d-da86fbd43f80" storeName='#[mule.home ++ "/apps/" ++ app.name ++ "/" ++ vars.payload.storeName]'/>
+		<file:read doc:name="Read Embedding Store" doc:id="882e5959-b951-4334-a58e-d41081d1eb2f" config-ref="File_Config" path='#[mule.home ++ "/apps/" ++ app.name ++ "/" ++ vars.payload.storeName]'/>
+		<sftp:write doc:name="Copy it to SFTP" doc:id="df216d45-8c2f-49d0-8b9d-85b8d5b17f59" config-ref="SFTP_Config" path='#["/muletest/upload/embedding/" ++ vars.payload.storeName]'>
+		</sftp:write>
+	</flow>
+	<flow name="knowledge-ask-question" doc:id="69687f3a-64ea-49aa-bd7e-312c7eebaf1a" >
+		<http:listener doc:name="Listener" doc:id="d9f422ba-c0fd-454c-a277-0795e0626931" config-ref="HTTP_Listener_config" path="/prompt" allowedMethods="POST"/>
+		<set-variable value="#[payload]" doc:name="Save Payload" doc:id="4308958e-a6c5-47ca-98db-2d4bc52a7cd2" variableName="payload"/>
+		<sftp:read doc:name="Get Embedding Store" doc:id="ccf73e33-18a3-4ea6-b764-abf7fc5adef8" config-ref="SFTP_Config" path="/muletest/upload/embedding/knowledge.store"/>
+		<file:write doc:name="Load Embedding Store" doc:id="5ec1aaca-f51f-4fb9-8037-1df03966e30c" config-ref="File_Config" path='#[mule.home ++ "/apps/" ++ app.name ++ "/knowledge.store"]'/>
+		<ms-aichain:embedding-get-info-from-store doc:name="Embedding get info from store" doc:id="02430cd1-9fda-4cef-b11d-149a9aac16f4" config-ref="MuleSoft_AI_Chain_Config" storeName='#[mule.home ++ "/apps/" ++ app.name ++ "/knowledge.store"]'>
+			<ms-aichain:data ><![CDATA[#[vars.payload.question]]]></ms-aichain:data>
+		</ms-aichain:embedding-get-info-from-store>
+		<ee:transform doc:name="Transform Message" doc:id="e7cf2f3f-fb89-4c58-89f6-5d2fe187f745" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	payload: payload,
+	attributes: attributes
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+		<logger level="INFO" doc:name="Logger" doc:id="9928b2b4-56fd-4554-8bf0-59c21b6dd95e" message="#[payload]"/>
+	</flow>
+</mule>

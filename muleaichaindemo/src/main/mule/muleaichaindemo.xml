@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:db="http://www.mulesoft.org/schema/mule/db" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns:ms-aichain="http://www.mulesoft.org/schema/mule/ms-aichain" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/ms-aichain http://www.mulesoft.org/schema/mule/ms-aichain/current/mule-ms-aichain.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/db http://www.mulesoft.org/schema/mule/db/current/mule-db.xsd">
+	<ms-aichain:config name="MuleSoft_AI_Chain_Config" llmType="OPENAI" configType="Configuration Json" modelName="gpt-3.5-turbo" doc:name="MuleSoft AI Chain Config" doc:id="1cda2d33-b9e0-4b48-a027-6f9a988a217e" filePath='#[mule.home ++ "/apps/" ++ app.name ++ "/envVars.json"]' />
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="000cee67-f23b-4d0a-886f-58b39e0f9b4c">
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<flow name="muleaichaindemoFlow" doc:id="4bbba9b7-6d99-401b-81f1-a040ca237ff2" >
+		<http:listener doc:name="Listener" doc:id="ebd337f4-07f5-4e5b-a7a1-f107e268e4a5" config-ref="HTTP_Listener_config" path="/chat_answering"/>
+		<logger level="INFO" doc:name="Logger" doc:id="515c0cd3-e7ae-4166-abce-efee4bbc4979" />
+		<ms-aichain:chat-answer-prompt doc:name="Chat answer prompt" doc:id="138e0ca1-7f2a-4615-88d6-5c55659f6d6a" config-ref="MuleSoft_AI_Chain_Config">
+			<ms-aichain:prompt ><![CDATA[#[payload.prompt]]]></ms-aichain:prompt>
+		</ms-aichain:chat-answer-prompt>
+		<ee:transform doc:name="Transform Message" doc:id="41cf46ce-53a4-4f2b-be15-f951a47f592e" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	payload: payload,
+	attributes: attributes
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
