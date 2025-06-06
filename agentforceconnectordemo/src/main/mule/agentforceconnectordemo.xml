@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ms-agentforce="http://www.mulesoft.org/schema/mule/ms-agentforce" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+	xmlns:http="http://www.mulesoft.org/schema/mule/http"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd
+http://www.mulesoft.org/schema/mule/ms-agentforce http://www.mulesoft.org/schema/mule/ms-agentforce/current/mule-ms-agentforce.xsd">
+	<http:listener-config name="HTTP_Listener_config" doc:name="HTTP Listener config" doc:id="3eb4c67f-41a9-4c00-915c-aa98defd280f" >
+		<http:listener-connection host="0.0.0.0" port="8081" />
+	</http:listener-config>
+	<ms-agentforce:config name="Agentforce_Configuration" doc:name="Agentforce Configuration" doc:id="2bffbca6-b8ee-4d1b-82e8-2175f556cfec" >
+		<ms-agentforce:oauth-client-credentials-connection >
+			<ms-agentforce:oauth-client-credentials clientId="3MVG94YrNIs0WS4dZur6a62Ihez11bV_Udmd1lGd9w3GyZrwVrrlOabl8DAVxaQY_RMTlBtlScaXANxnkztD2" clientSecret="7BE998C6ED5EC920A9DD3C4EF3B487E2F2662719356A6A0A99C912F558DC5B9D" tokenUrl="https://jasmineconseilinc-dev-ed.develop.my.salesforce.com/services/oauth2/token" />
+		</ms-agentforce:oauth-client-credentials-connection>
+	</ms-agentforce:config>
+	<flow name="agentforceconnectordemoFlow" doc:id="6d71e76c-ec1c-4b8d-a564-e43bb8dad298" >
+		<http:listener doc:name="Listener" doc:id="5b26d00b-d036-4187-b8ba-5b208b164edb" config-ref="HTTP_Listener_config" path="/Demo"/>
+		<ms-agentforce:start-agent-conversation doc:name="Start agent conversation" doc:id="f9b94a13-9b53-4f18-b2e5-195742e32c55" config-ref="Agentforce_Configuration" agent="0XxKX000000qd010AA"/>
+		<ee:transform doc:name="Transform Message" doc:id="1b030971-ddaf-49b4-81ff-2010bdede0f4" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	payload: payload,
+	attributes: attributes
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="agentforceconnectordemoFlow1" doc:id="958bcc83-08f3-44f4-a7c8-1a2199a384a3" >
+		<http:listener doc:name="Listener" doc:id="17af7856-3f6a-4cf2-8582-52b77bf2f75a" config-ref="HTTP_Listener_config" path="/continue"/>
+		<ms-agentforce:continue-agent-conversation doc:name="Continue agent conversation" doc:id="2f7fe1ba-b0ff-4b9b-b497-5e51e4e95501" config-ref="Agentforce_Configuration" messageSequenceNumber="1">
+			<ms-agentforce:message ><![CDATA[#[payload.prompt]]]></ms-agentforce:message>
+			<ms-agentforce:session-id ><![CDATA[#[payload.sessionId]]]></ms-agentforce:session-id>
+		</ms-agentforce:continue-agent-conversation>
+		<ee:transform doc:name="Transform Message" doc:id="4304b489-02a0-474c-8236-cccd895182d7" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	payload: payload,
+	attributes: attributes
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+	<flow name="agentforceconnectordemoFlow2" doc:id="2f889508-019b-4294-b107-5b19c523b0a7" >
+		<http:listener doc:name="Listener" doc:id="fcbb4ff6-9de2-4651-992e-c52df475372e" config-ref="HTTP_Listener_config" path="/endconversation"/>
+		<ms-agentforce:end-agent-conversation doc:name="End agent conversation" doc:id="f073cfaa-c61a-4aff-8f95-191ceebd5bb0" config-ref="Agentforce_Configuration">
+			<ms-agentforce:session-id ><![CDATA[#[payload.sessionId]]]></ms-agentforce:session-id>
+		</ms-agentforce:end-agent-conversation>
+		<ee:transform doc:name="Transform Message" doc:id="fca631b4-343e-4d27-bfae-be2068571759" >
+			<ee:message >
+				<ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+{
+	payload: payload,
+	attributes: attributes
+}]]></ee:set-payload>
+			</ee:message>
+		</ee:transform>
+	</flow>
+</mule>
