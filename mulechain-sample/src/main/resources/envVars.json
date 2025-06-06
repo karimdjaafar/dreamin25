@@ -1,6 +1,6 @@
 {
     "OPENAI": {
-        "OPENAI_API_KEY": "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"
+        "OPENAI_API_KEY": "YOUR_OPEN_API_KEY"
     },
     "MISTRAL_AI": {
         "MISTRAL_AI_API_KEY": "YOUR_MISTRAL_AI_API_KEY"
