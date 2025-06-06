@@ -1,6 +1,7 @@
-# dreamin25
+# Dreamin25
 
-Somes stuff about the presentation/hands-on of Agentforce and MuleChain Dreamin you can use
+
+Some stuff about the presentation/hands-on of Agentforce and MuleChain Dreamin you can use
 
 
 mulechaindemo
